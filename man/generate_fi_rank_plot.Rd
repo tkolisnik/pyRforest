@@ -16,7 +16,8 @@ generate_fi_rank_plot(
   labelhorizontaladjust = 1.05,
   indvPermScoresOn = TRUE,
   logOn = TRUE,
-  focusedView = FALSE
+  focusedView = FALSE,
+  showlegend = TRUE
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ generate_fi_rank_plot(
 \item{logOn}{logical TRUE or FALSE, whether or not to use the log or unlogged data. Default to TRUE.}
 
 \item{focusedView}{logical TRUE or FALSE, whether or not to show the full plot or a focused view of only the features above the cutoff line.}
+
+\item{showlegend}{logical TRUE or FALSE, whether or not to include the legend}
 }
 \value{
 A plot of log feature importance score by feature rank showing the upper quartile intersection which we recommend to use for a cutoff.
@@ -50,6 +53,7 @@ A plot of log feature importance score by feature rank showing the upper quartil
 \description{
 This function generates a figure which shows the true observed data plotted against the permuted data, by rank. The intersection of the true data with the upper quartile is shown, which we recommend as a significance cutoff.
 Note: There are ample parameters for controlling the axes scale, label location, and zoom, because of data variability, you will almost certainly have to adjust these to fit your plot.
+Note: Plot is based on ggplot2, and after saving the plot object 'p' you can use ggplot2 commands to modify it further, e.g. 'p2 <- p + ggplot2::theme_gray()' to change background colour.
 }
 \examples{
 fiplot_full <- generate_fi_rank_plot(feat_importances$permuted_importances, quantile_data, xlimitmin=1, xlimitmax = 10, ylimitmin= -5, ylimitmax = 0, labelhorizontaladjust = -0.05,labelverticaladjust = 1.5,focusedView = FALSE,logOn = TRUE)
