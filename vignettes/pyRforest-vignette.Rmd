@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 
 # Introduction to pyRforest
 
-**Welcome to pyRforest:** A comprehensive tool for genomic data analysis featuring scikit-learn Random Forests in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and a matched binary outcome variable using Random Forest models. Please read on for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, and our custom feature reduction approach by way of rank-based permutation. You will also be directed you through our integration with Gene Ontology, Enrichment Analysis, SHAP and gProfiler.
+**Welcome to pyRforest:** A comprehensive tool for genomic data analysis featuring scikit-learn Random Forests in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and a matched binary outcome variable using Random Forest models. Please read on for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, SHAPley additive explanations, and our custom feature reduction approach by way of rank-based permutation. You will also be directed you through our integration with clusterProfiler and g:Profiler for Gene Ontology and Enrichment Analysis.
 
 This vignette will guide you through:
 
@@ -38,7 +38,7 @@ This vignette will guide you through:
 
 -   Integration with SHAP for feature directionality interpretation.
 
--   Integration with gProfiler for gene set enrichment and ontology analysis.
+-   Integration with clusterProfiler and g:Profiler for gene set enrichment & gene ontology analysis.
 
 ## About pyRforest
 
@@ -62,7 +62,7 @@ pyRforest offers:
 
 -   SHAP values for understanding feature influence on the outcome.
 
--   Integration with gProfiler for extensive gene set enrichment analysis.
+-   Integration with clusterProfiler and g:Profiler for gene set enrichment & GO analysis.
 
 
 For more information and to contribute to the pyRforest package, please visit the [GitHub repository](https://github.com/tkolisnik/pyRforest).
@@ -74,7 +74,7 @@ This package is an independent project, not officially endorsed or maintained by
 
 # R Package Installation and Setup
 
-For the best experience, use [RStudio by Posit](https://posit.co/products/open-source/rstudio/) for installing and running the pyRforest package.
+For the best experience, we recommend the installation of R version 4.3.1, and [RStudio by Posit](https://posit.co/products/open-source/rstudio/) version 023.09.1+494 or later, for installing and running the pyRforest package.
 
 ```{r, eval=FALSE, tidy=TRUE}
 # Installation:
@@ -89,32 +89,52 @@ devtools::install_github("tkolisnik/pyRforest")
 library(pyRforest)
 ```
 
-This package has been developed for Apple mac (M1 arm64). It does not work properly on windows machines due to incompatibilties with the back-end paralellization of model building. It likely works on linux machines and other mac's but has not been tested.
+This package has been developed on Apple mac (M1 arm64). It does not work properly on windows machines due to incompatibilties with the back-end paralellization of model building. It has been tested and works on Linux and [posit Cloud](https://posit.cloud/).
 
-This package leverages [scikit-learn's](https://scikit-learn.org/stable/) random forest model using the R package reticulate to allow us to execute [Python](https://www.python.org/) code within [R](https://www.r-project.org/about.html). Therefore, in order to use this package you must first install python 3.9.18 and [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), and setup a conda environment with python 3.9.18, scikit-learn 3.1.2, numpy 1.26.0 and pandas 2.1.2 and their dependencies.
+This package leverages [scikit-learn's](https://scikit-learn.org/stable/) random forest model using the R package reticulate to allow us to execute [Python](https://www.python.org/) code within [R](https://www.r-project.org/about.html). Therefore, in order to use this package you must first install python 3.9.18 and [reticulate](https://rstudio.github.io/reticulate/) and optionally [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), and setup either a reticulate virtualenv (linux) or a conda environment (mac) with python 3.9.18, scikit-learn 3.1.2, numpy 1.26.0, shap 0.43.0 and their dependencies.
 
-This can be done in R once [reticulate](https://rstudio.github.io/reticulate/) is installed and loaded by running the commands:
+This package requires the R package reticulate (version 1.34.0 recommended) [reticulate](https://rstudio.github.io/reticulate/) is installed and loaded by running the commands:
 
 ```{r, eval=FALSE, tidy=TRUE}
+# First ensure reticulate is installed:
 if (!requireNamespace("reticulate")) {
     install.packages("reticulate")
 }
-library(reticulate)
 
+# If using reticulate's virtualenv (recommended for Linux):
+
+# Initial setup:
+library(reticulate)
+reticulate::install_python(version = "3.9.18")
+Sys.setenv(WORKON_HOME = "virtualenvs")
+reticulate::virtualenv_create(envname = "pyRforest-venv", python_version = "3.9.18", packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0"))
+reticulate::use_virtualenv("pyRforest-venv")
+
+# Subsequent usage after initial setup:
+library(reticulate)
+Sys.setenv(WORKON_HOME = "virtualenvs")
+use_virtualenv("pyRforest-venv")
+
+# If using conda (recommended for M-series Arm64 Macs):
+library(reticulate)
+# Install python 3.9.18 if not already installed: https://www.python.org/downloads/macos/ and ensure it is located at /usr/local/bin/python3. 
 reticulate::use_python("/usr/local/bin/python3")
-reticulate::conda_create(envname = "pyRforest-conda")
-reticulate::conda_install(envname = "pyRforest-conda", packages = c("scikit-learn", "numpy","shap"))
+reticulate::conda_install(envname = "pyRforest-conda", python_version = "3.9.18",packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0"))
 reticulate::use_condaenv("pyRforest-conda", required = TRUE)
 
-# You can check if this has worked by running
+# Subsequent usage after initial setup:
+library(reticulate)
+use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+
+# You can check if environment setup has worked by running:
 reticulate::py_config()
 
-# If conda installation has worked, the previous command will result in an output message similar to:
+# If environment installation has worked, the previous command will result in an output message similar to:
 
 #python:         /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/bin/python
 #libpython:      /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/libpython3.9.dylib
 #pythonhome:     /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda:/.../pyRforest-conda
-#version:        3.9.18 | packaged by conda-forge | (main, Aug 30 2023, 03:53:08)  [Clang 15.0.7 ]
+#version:        3.9.18 
 #numpy:          /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/python3.9/sit...
 #numpy_version:  1.26.0
 #sklearn:        /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/python3.9/sit...
@@ -139,14 +159,14 @@ For more information on dependency installation see:
 
 ## Troubleshooting
 
-If when trying to load your conda environment you get the following error:
+If when trying to load your environment you get the following error:
 
 ERROR: The requested version of Python ('path/env/python') cannot be used, as another version
 of Python ('/usr/local/bin/python3') has already been initialized. Please restart the R session if you need to attach reticulate to a different version of Python.
 Error in use_python(python, required = required) : 
   failed to initialize requested version of Python
   
-Then press session -> restart R -> then reload your conda environment using reticulate::use_condaenv("envname")
+Then press session -> restart R -> then reload your environment 
 
 # Data Preparation
 
