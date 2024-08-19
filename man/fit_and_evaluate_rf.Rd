@@ -38,8 +38,14 @@ This function fits a Random Forest model using the provided hyperparameters and
 training data, then evaluates its performance on a validation set.
 }
 \examples{
-fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,processed_training_data$X_training_mat,processed_training_data$y_training_vector,processed_validation_data$X_validation_mat,processed_validation_data$y_validation_vector)
+\dontrun{
+fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,
+      processed_training_data$X_training_mat,
+      processed_training_data$y_training_vector,
+      processed_validation_data$X_validation_mat,
+      processed_validation_data$y_validation_vector)
 
-Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
+# Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 print(fitting_results)
+}
 }

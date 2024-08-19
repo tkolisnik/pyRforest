@@ -10,6 +10,7 @@ A list of 4 tibbles
 \source{
 This data is a subset of a larger dataset of real-patient data from study:
 SRA Accession: PRJNA788974 mapped to the Hg38 and aligned using STAR Aligner.
+Data is from colorectal cancer patients with a binary-coded target 0 = 'Left' and 1 = 'Right' (colorectal cancer side localizations)
 Data has been manipulated and is for demonstration purposes only
 }
 \usage{

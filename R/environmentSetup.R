@@ -10,16 +10,19 @@
 #'   \item \code{sklearn}: Comprehensive machine learning library in Python.
 #'   \item \code{numpy}: Fundamental package for scientific computing in Python.
 #'   \item \code{shap}: Library for SHAP (SHapley Additive exPlanations) values, which explain the output of machine learning models.
+#'   \item \code{skopt}: Package for optimizing hyperparameter tuning includes BayesSearchCV.
+#'   \item \code{memprof}: Package for monitoring python memory usage.
 #' }
 #' These libraries are essential for various machine learning tasks and analyses within the package.
 #' This centralized setup ensures consistency and reduces redundancy.
 #'
 #' @return
-#' A list containing imported Python modules: \code{sklearn}, \code{numpy}, and \code{shap}.
+#' A list containing imported Python modules: \code{sklearn}, \code{numpy}, \code{shap}, \code{skopt}, and \code{memprof}.
 #'
 #' @examples
+#' \dontrun{
 #' python_pkgs <- setup_python_pkgs()
-#' # You can now use python_pkgs$sklearn, python_pkgs$numpy, and python_pkgs$shap in other functions
+#' }
 #' @import reticulate
 #' @export
 setup_python_pkgs <- function() {
@@ -27,5 +30,7 @@ setup_python_pkgs <- function() {
   sklearn <- reticulate::import("sklearn", convert = FALSE)
   numpy <- reticulate::import("numpy", convert = FALSE)
   shap <- reticulate::import("shap", convert = FALSE)
-  return(list(sklearn = sklearn, numpy = numpy, shap = shap))
+  skopt <- reticulate::import("skopt", convert=FALSE) #scikit-optimize
+  memprof <- reticulate::import("memory_profiler", convert=FALSE)
+  return(list(sklearn = sklearn, numpy = numpy, shap = shap, skopt = skopt, memprof = memprof))
 }

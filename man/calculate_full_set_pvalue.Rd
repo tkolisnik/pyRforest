@@ -27,5 +27,7 @@ the observed sum of absolute deviations from the mean feature importance to thos
 It is particularly useful in permutation tests to assess the statistical significance of the observed data.
 }
 \examples{
+\dontrun{
 pvalue_set <- calculate_full_set_pvalue(feat_importances$permuted_importances, quantile_data)
+}
 }

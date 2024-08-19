@@ -7,7 +7,7 @@
 setup_python_pkgs()
 }
 \value{
-A list containing imported Python modules: \code{sklearn}, \code{numpy}, and \code{shap}.
+A list containing imported Python modules: \code{sklearn}, \code{numpy}, \code{shap}, \code{skopt}, and \code{memprof}.
 }
 \description{
 This function sets up the Python environment for the package. It imports essential Python
@@ -20,11 +20,14 @@ The function imports the following Python libraries:
 \item \code{sklearn}: Comprehensive machine learning library in Python.
 \item \code{numpy}: Fundamental package for scientific computing in Python.
 \item \code{shap}: Library for SHAP (SHapley Additive exPlanations) values, which explain the output of machine learning models.
+\item \code{skopt}: Package for optimizing hyperparameter tuning includes BayesSearchCV.
+\item \code{memprof}: Package for monitoring python memory usage.
 }
 These libraries are essential for various machine learning tasks and analyses within the package.
 This centralized setup ensures consistency and reduces redundancy.
 }
 \examples{
+\dontrun{
 python_pkgs <- setup_python_pkgs()
-# You can now use python_pkgs$sklearn, python_pkgs$numpy, and python_pkgs$shap in other functions
+}
 }

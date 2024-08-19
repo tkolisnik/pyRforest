@@ -4,7 +4,12 @@
 \alias{calculate_SHAP_values}
 \title{Calculate SHAP Values and Identify Significant Features}
 \usage{
-calculate_SHAP_values(model, data, class_index = 1, shap_std_dev_factor = 0.5)
+calculate_SHAP_values(
+  model,
+  data,
+  class_index = NULL,
+  shap_std_dev_factor = 0.5
+)
 }
 \arguments{
 \item{model}{The trained model for which SHAP values are to be calculated.}
@@ -12,6 +17,7 @@ calculate_SHAP_values(model, data, class_index = 1, shap_std_dev_factor = 0.5)
 \item{data}{A matrix or data frame of input features for SHAP value calculation.}
 
 \item{class_index}{Index of the class for which to calculate SHAP values.
+This index represents the class for which SHAP values will be calculated, with feature contributions shown relative to that specific class.
 For binary classification (e.g., target 1 = "Right", target 0 = "Left"),
 this parameter determines the class perspective for SHAP analysis.
 In the demo_rnaseq_data dataset:
@@ -20,6 +26,8 @@ In the demo_rnaseq_data dataset:
 \item If class_index = 0, SHAP values represent feature contributions towards predicting "Left".
 In binary classification, SHAP values for one class are the negative of those for the other class,
 this reflects how each feature influences the model's output in opposite directions for each class.
+Recommend to run it once with default/none set to get an idea of how it works.
+For multiclass you may want to run once for each class.
 }}
 
 \item{shap_std_dev_factor}{Factor to determine the cutoff for significant SHAP values.
@@ -39,5 +47,7 @@ It then identifies significant features based on the SHAP values for the specifi
 Additionally, it prepares a long-format data frame of individual SHAP values suitable for visualization.
 }
 \examples{
+\dontrun{
 shapvals <- calculate_SHAP_values(fitting_results$model, processed_training_data$X_training_mat, class_index = 1, shap_std_dev_factor = 0.5)
+}
 }

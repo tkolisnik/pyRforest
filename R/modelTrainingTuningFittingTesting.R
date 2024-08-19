@@ -1,8 +1,8 @@
 #' Perform hyperparameter tuning and training for RandomForestClassifier
 #'
 #' This function uses scikit-learn's python based GridSearchCV to perform hyperparameter tuning and training of a RandomForestClassifier.
-#' It allows for customizable parameter grids and includes preprocessing steps of one-hot encoding
-#' and scaling. The function is designed to find the best hyperparameters based on accuracy. Please reference the scikit-learn GridSearchCV documentation for the full description of options, however our defaults are comprehensive.
+#' It supports binary and categorical multiclass classification and it allows for customizable parameter grids and includes preprocessing steps of one-hot encoding
+#' and scaling. The function is designed to find the best hyperparameters using a brute force search. Please reference the scikit-learn GridSearchCV documentation for the full description of options, however our defaults are comprehensive.
 #'
 #' @param X The features for the model (data frame or matrix). Usually obtained from the create_feature_matrix function.
 #' @param y The target variable for the model (vector). Usually obtained from the create_feature_matrix function.
@@ -30,24 +30,31 @@
 #' @return A list containing the best hyperparameters for the model, cross-validation scores on training set,
 #'         and the fitted GridSearchCV object.
 #' @examples
+#' \dontrun{
 #' library(pyRforest)
 #'
-#' Load conda environment, which ensures the correct version of Python and the necessary python packages can be loaded. See vignette for more details.
+#' # Load conda environment, which ensures the correct version of Python and the necessary python packages can be loaded. See vignette for more details.
 #' use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
 #'
-#' Load the demo data
+#' # Load the demo data
 #' data(demo_rnaseq_data)
 #'
-#' Prepare the sample data into a format ingestible by the ML algorithm
+#' # Prepare the sample data into a format ingestible by the ML algorithm
 #' processed_training_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
 #'
-#' Model training (Warning: may take a long time if dataset is large and if param_grid has many options)
-#' tuning_results <- tune_and_train_rf_model(processed_training_data$X_training_mat, processed_training_data$y_training_vector, cv_folds = 5, seed = 123, param_grid = list(max_depth = list(10L, 20L)))
+#' # Model training (Warning: may take a long time if dataset is large and if param_grid has many options)
+#' tuning_results <- tune_and_train_rf_model(processed_training_data$X_training_mat,
+#'       processed_training_data$y_training_vector,
+#'       cv_folds = 5,
+#'       seed = 123,
+#'       param_grid = list(max_depth = list(10L, 20L)))
 #' print(tuning_results$best_params)
-#' print(tuning_results$grid_search$best_score_)
+#' print(tuning_results$best_score_)
+#' }
 #' @export
 
-tune_and_train_rf_model <- function(X, y, cv_folds = 5, scoring_method = "roc_auc",  seed = 4, param_grid = NULL, n_jobs=1, n_cores=-2) {
+tune_and_train_rf_model_grid <- function(X, y, cv_folds = 5, scoring_method = "roc_auc",  seed = 4, param_grid = NULL, n_jobs=1, n_cores=-2) {
+
   # Import necessary Python modules using reticulate
   python_pkgs<-setup_python_pkgs()
 
@@ -58,6 +65,7 @@ tune_and_train_rf_model <- function(X, y, cv_folds = 5, scoring_method = "roc_au
   StandardScaler <- python_pkgs$sklearn$preprocessing$StandardScaler
   StratifiedKFold <- python_pkgs$sklearn$model_selection$StratifiedKFold
   RandomForestClassifier <- python_pkgs$sklearn$ensemble$RandomForestClassifier
+  memory_profiler <- python_pkgs$memprof$memory_usage
 
   # One-hot encode categorical variables and scale numeric variables
   ohe <- OneHotEncoder()
@@ -87,8 +95,13 @@ tune_and_train_rf_model <- function(X, y, cv_folds = 5, scoring_method = "roc_au
   # Check if param_grid is in correct format
   if (!is.null(param_grid)) {
     if (!is.list(param_grid)) {
-      stop("param_grid must be a list.")
+      stop("param_grid must be a list of parameter lists. Add capital L after all integers e.g. min_samples_leaf = list(2L, 3L, 4L, 5L, 10L) ")
     }
+  }
+
+  # Modify scoring method for multiclass roc_auc
+  if (scoring_method == "roc_auc" && length(unique(y)) > 2) {
+    scoring_method <- "roc_auc_ovr"  # Use the multiclass version
   }
 
   # Create a stratified k-fold cross validation object
@@ -105,10 +118,144 @@ tune_and_train_rf_model <- function(X, y, cv_folds = 5, scoring_method = "roc_au
   )
 
   # Fit the GridSearchCV object to the data
-  grid_search$fit(X_scaled, y)
+  train_model <- function() {
+    grid_search$fit(X_scaled, y)
+  }
+
+  mem_usage <- memory_profiler(train_model)
+  mem_usage <- py_to_r(mem_usage)
+  #mem_usage_mb <- sapply(mem_usage, function(x) x * 1.048576)
+  avg_mem_usage_mib <- mean(mem_usage)
 
   # Return the best parameters and the GridSearchCV object
-  return(list(best_params = grid_search$best_params_, grid_search = grid_search))
+  return(list(best_params = grid_search$best_params_, best_score=grid_search$best_score_, grid_search = grid_search, memory_usage = avg_mem_usage_mib))
+}
+
+#' Tune and train RandomForest model using Bayesian optimization
+#'
+#' This function uses scikit-learn's python-based `BayesSearchCV` from the `skopt` library
+#' to perform hyperparameter tuning and training of a `RandomForestClassifier`.
+#' It leverages Bayesian optimization for a more efficient hyperparameter search,
+#' allowing more optimal parameter configurations to be discovered faster and with less compute time when compared to brute-force methods like GridSearchCV.
+#' It supports binary and categorical multiclass classification, and the function includes preprocessing steps of one-hot encoding and scaling for compatibility with the random forest algorithm.
+#' Please reference the scikit-learn `BayesSearchCV` documentation for more details on customization.
+#'
+#' @param X Training features (data frame or matrix). Typically obtained from the `create_feature_matrix` function.
+#' @param y Target vector for the model. Usually obtained from the `create_feature_matrix` function.
+#' @param cv_folds The number of cross-validation splits in `StratifiedKFold` (default: 5).
+#' @param scoring_method The scoring method to be used during optimization (default: 'roc_auc'). Options include 'accuracy', 'precision', 'recall', 'f1', etc. See scikit-learn's `BayesSearchCV` documentation for a full list of scoring methods.
+#' @param seed An optional random seed for reproducibility (default: 4).
+#' @param param_grid An optional list of hyperparameters for Bayesian optimization.
+#'                   If NULL, a default grid will be used. The list should follow the format expected by `BayesSearchCV`.
+#'                   The default `param_grid` includes:
+#'                   \itemize{
+#'                     \item \code{bootstrap} (list): [TRUE]
+#'                     \item \code{class_weight} (list): [NULL]
+#'                     \item \code{max_depth} (list): [5L, 10L, 15L, 20L, NULL]
+#'                     \item \code{n_estimators} (integer sequence): [50, 75, 100, 125, 150, 175, 200]
+#'                     \item \code{max_features} (list): ["sqrt", "log2", 0.1, 0.2]
+#'                     \item \code{criterion} (list): ["gini"]
+#'                     \item \code{warm_start} (list): [FALSE]
+#'                     \item \code{min_samples_leaf} (list): [2L, 3L, 4L, 5L, 10L]
+#'                     \item \code{min_samples_split} (list): [2L, 3L, 4L, 5L, 10L]
+#'                   }
+#' @param n_jobs The number of jobs to run in parallel during training. Default is 1.
+#' @param n_cores The number of cores to use for parallel processing. Default is -2, meaning it will use all but 2 cores.
+#' @return A list containing the best hyperparameters for the model, the cross-validation score, the trained `BayesSearchCV` object, and memory usage statistics.
+#' @examples
+#' \dontrun{
+#' library(pyRforest)
+#'
+#' # Load the conda environment for the package dependencies
+#' use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+#'
+#' # Load sample data
+#'  data(demo_rnaseq_data)
+#'
+#' # Preprocess the data
+#' processed_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
+#'
+#' # Model training
+#' tuning_results <- tune_and_train_rf_model_bayes(processed_data$X_training_mat,
+#'          processed_data$y_training_vector,
+#'          cv_folds = 5,
+#'          seed = 123,
+#'          param_grid = list(max_depth = list(10L, 20L)))
+#' print(tuning_results$best_params)
+#' print(tuning_results$best_score)
+#' }
+#' @export
+
+tune_and_train_rf_model_bayes <- function(X, y, cv_folds = 5, scoring_method = "roc_auc",  seed = 4, param_grid = NULL, n_jobs=1, n_cores=-2)  {
+  # Import necessary Python modules using reticulate
+  python_pkgs<-setup_python_pkgs()
+
+  BayesSearchCV <- python_pkgs$skopt$BayesSearchCV
+  OneHotEncoder <- python_pkgs$sklearn$preprocessing$OneHotEncoder
+  StandardScaler <- python_pkgs$sklearn$preprocessing$StandardScaler
+  RandomForestClassifier <- python_pkgs$sklearn$ensemble$RandomForestClassifier
+  StratifiedKFold <- python_pkgs$sklearn$model_selection$StratifiedKFold
+  memory_profiler <- python_pkgs$memprof$memory_usage
+  # One-hot encode categorical variables and scale numeric variables
+  ohe <- OneHotEncoder()
+  scaler <- StandardScaler(with_mean = FALSE)
+
+  X_encoded <- ohe$fit_transform(X)
+  X_scaled <- scaler$fit_transform(X_encoded)
+
+  # Create the Random Forest Classifier
+  clf <- RandomForestClassifier(random_state = as.integer(seed), n_jobs = as.integer(n_jobs))
+
+  # Default parameter grid if not provided
+  if (is.null(param_grid)) {
+    param_grid <- list(
+      bootstrap = list(TRUE),
+      class_weight = list(NULL),
+      max_depth = list(5L, 10L, 15L, 20L, NULL),
+      n_estimators = as.integer(seq(50, 200, 25)),
+      max_features = list("sqrt", "log2", 0.1, 0.2),
+      criterion = list("gini"),
+      warm_start = list(FALSE),
+      min_samples_leaf = list(2L, 3L, 4L, 5L, 10L),
+      min_samples_split = list(2L, 3L, 4L, 5L, 10L)
+    )
+  }
+
+  # Check if param_grid is in correct format
+  if (!is.null(param_grid)) {
+    if (!is.list(param_grid)) {
+      stop("param_grid must be a list of parameter lists. Add capital L after all integers e.g. min_samples_leaf = list(2L, 3L, 4L, 5L, 10L) ")
+    }
+  }
+
+  # Adjust scoring method if multiclass ROC AUC is needed
+  if (scoring_method == "roc_auc" && length(unique(y)) > 2) {
+    scoring_method <- "roc_auc_ovr"
+  }
+
+  # Create a stratified k-fold cross validation object
+  strat_k_fold <- StratifiedKFold(n_splits = as.integer(cv_folds), shuffle = TRUE, random_state = as.integer(seed))
+
+  # Initialize the BayesSearchCV object
+  bayes_search <- BayesSearchCV(
+    estimator = clf,
+    search_spaces = param_grid,
+    cv = strat_k_fold,
+    scoring = scoring_method,
+    verbose = as.integer(2),
+    n_jobs = as.integer(n_cores)
+  )
+
+  # Fit the BayesSearchCV object to the data
+  train_model <- function(){
+    bayes_search$fit(X_scaled, y)
+  }
+
+  mem_usage <- memory_profiler(train_model)
+
+  # Return the best parameters and the BayesSearchCV object
+  return(list(best_params = bayes_search$best_params_, best_score = bayes_search$best_score_, bayes_search = bayes_search, memory_usage = mem_usage))
+
 }
 
 #' Fit and Evaluate Random Forest Model
@@ -126,15 +273,21 @@ tune_and_train_rf_model <- function(X, y, cv_folds = 5, scoring_method = "roc_au
 #' @return A list containing the trained model and, if testing or validation data is provided,
 #'         the accuracy, f1, precision, recall and roc_auc scores on the testing or validation set.
 #' @examples
-#' fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,processed_training_data$X_training_mat,processed_training_data$y_training_vector,processed_validation_data$X_validation_mat,processed_validation_data$y_validation_vector)
+#' \dontrun{
+#' fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,
+#'       processed_training_data$X_training_mat,
+#'       processed_training_data$y_training_vector,
+#'       processed_validation_data$X_validation_mat,
+#'       processed_validation_data$y_validation_vector)
 #'
-#' Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
+#' # Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 #' print(fitting_results)
+#' }
 #' @export
 
 fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_val = NULL, save_path = NULL, seed=4) {
   # Import necessary Python modules using reticulate
-  python_pkgs<-setup_python_pkgs()
+  python_pkgs <- setup_python_pkgs()
 
   # Import RandomForestClassifier from sklearn.ensemble
   random_forest_classifier <- python_pkgs$sklearn$ensemble$RandomForestClassifier
@@ -167,29 +320,14 @@ fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_v
   reticulate::py_run_string("params = final_model.get_params()")
   all_params <- py$params
 
-  # Helper function for printing full list of model parameters (by default only a few print and it looks misleading)
+  # Helper function for printing full list of model parameters
   format_model_params <- function(params_list) {
-    params_str <- "RandomForestClassifier("
-    param_lines <- c()
-
-    for (param_name in names(params_list)) {
+    param_lines <- sapply(names(params_list), function(param_name) {
       value <- params_list[[param_name]]
-
-      # Handle different value types
-      if (is.logical(value)) {
-        value_str <- ifelse(value, "TRUE", "FALSE")
-      } else if (is.null(value)) {
-        value_str <- "NULL"
-      } else {
-        value_str <- toString(value)
-      }
-
-      param_lines <- c(param_lines, sprintf("%s=%s", param_name, value_str))
-    }
-
-    params_str <- paste0(params_str, paste(param_lines, collapse=", "), ")")
-
-    return(params_str)
+      value_str <- ifelse(is.logical(value), ifelse(value, "TRUE", "FALSE"), toString(value))
+      sprintf("%s=%s", param_name, value_str)
+    })
+    paste0("RandomForestClassifier(", paste(param_lines, collapse = ", "), ")")
   }
 
   full_model_parameters <- format_model_params(all_params)
@@ -200,20 +338,27 @@ fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_v
   # If validation data is provided, compute the metrics on the validation set
   if (!is.null(X_val) && !is.null(y_val)) {
     y_pred <- final_model$predict(X_val)
-    y_pred_proba <- final_model$predict_proba(X_val)[,1]  # Assuming binary classification
+    y_pred_proba <- final_model$predict_proba(X_val)
 
     # Compute accuracy
     accuracy <- metrics$accuracy_score(y_val, y_pred)
 
-    # Compute F1 score
-    f1 <- metrics$f1_score(y_val, y_pred, average = 'binary')  # Adjust 'average' as needed
+    # Compute F1 score with 'micro' averaging
+    f1 <- metrics$f1_score(y_val, y_pred, average = 'micro')
 
-    # Compute Precision and Recall
-    precision <- metrics$precision_score(y_val, y_pred, average = 'binary')
-    recall <- metrics$recall_score(y_val, y_pred, average = 'binary')
+    # Compute Precision and Recall with 'micro' averaging
+    precision <- metrics$precision_score(y_val, y_pred, average = 'micro')
+    recall <- metrics$recall_score(y_val, y_pred, average = 'micro')
 
     # Compute ROC AUC Score
-    roc_auc <- metrics$roc_auc_score(y_val, y_pred_proba)
+    if (length(unique(y_val)) == 2) {
+      # Binary classification: extract probabilities for the positive class
+      roc_auc <- metrics$roc_auc_score(y_val, y_pred_proba[, 1])
+    } else {
+      # Multiclass classification ROC calculation.
+      roc_auc <- metrics$roc_auc_score(y_val, y_pred_proba, multi_class = "ovr")
+      print("Note: For multiclass classification, the ROC AUC score is calculated using the one-vs-rest (OVR) approach.")
+    }
 
     # Add scores to the results
     results$accuracy <- accuracy
@@ -223,9 +368,10 @@ fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_v
     results$roc_auc <- roc_auc
   }
 
-
   return(results)
 }
+
+
 
 #' Calculate True and Permuted Feature Importances
 #'
@@ -238,10 +384,12 @@ fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_v
 #' @param n_permutations The number of permutations to perform (default: 1000).
 #' @return A list containing three data frames: one for true feature importances, one for permuted importances, and one containing the top features (filtered non-zero true importances).
 #' @examples
+#' \dontrun{
 #' feat_importances <- pyRforest::calculate_feature_importances(fitting_results$model,processed_training_data$X_training_mat,processed_training_data$y_training_vector,n_permutations=1000)
 #'
-#' Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
+#' # Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 #' print(top_features)
+#' }
 #' @import dplyr
 #' @import reticulate
 #' @export
@@ -312,3 +460,4 @@ calculate_feature_importances <- function(model, X_train, y_train, n_permutation
     top_features = filtered_true_feature_importances
   ))
 }
+

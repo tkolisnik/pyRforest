@@ -25,9 +25,10 @@ This function prepares a dataset for scikit-learn random forest machine learning
 Data must be in the correct input format, see vignette or example dataset for details.
 }
 \examples{
+\dontrun{
 library(pyRforest)
 
-Load sample data
+# Load sample data
 data("demo_rnaseq_data")
 
 processed_training_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
@@ -35,5 +36,5 @@ processed_training_data <- create_feature_matrix(demo_data_rnaseq_rf$training_da
 processed_validation_data <- create_feature_matrix(demo_data_rnaseq_rf$validation_data, "validation")
 
 processed_testing_data <- create_feature_matrix(demo_data_rnaseq_rf$testing_data, "testing")
-
+}
 }

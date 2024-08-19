@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 
 # Introduction to pyRforest
 
-**Welcome to pyRforest:** A comprehensive tool for genomic data analysis featuring scikit-learn Random Forests in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and a matched binary outcome variable using Random Forest models. Please read on for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, SHAPley additive explanations, and our custom feature reduction approach by way of rank-based permutation. You will also be directed you through our integration with clusterProfiler and g:Profiler for Gene Ontology and Enrichment Analysis.
+**Welcome to pyRforest:** A comprehensive tool for genomic data analysis featuring scikit-learn Random Forests in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and matched binary or categorical outcome variables using Random Forest models. Please read on for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, SHAPley additive explanations, and our custom feature reduction approach by way of rank-based permutation. You will also be directed you through our integration with clusterProfiler and g:Profiler for Gene Ontology and Enrichment Analysis.
 
 This vignette will guide you through:
 
@@ -44,7 +44,7 @@ This vignette will guide you through:
 
 Consider pyRforest if you:
 
--   Have a genomic dataset (e.g. RNA-seq or Microarray) with a binary outcome variable.
+-   Have a genomic dataset (e.g. RNA-seq or Microarray) with a binary or categorical (including multiclass) outcome variables.
 
 -   Aim to develop and evaluate Random Forest models from Python's scikit-learn through our custom R wrapper.
 
@@ -54,7 +54,7 @@ Consider pyRforest if you:
 
 pyRforest offers:
 
--   Python scikit-learn's superior Random Forest class balancing, GRIDSearchCV hyperparameter tuning with cross-validation, efficient memory management, sparse-data handling, and parallelization.
+-   Python scikit-learn's superior Random Forest class balancing, BayesSearchCV and GRIDSearchCV hyperparameter tuning with cross-validation, efficient memory management, sparse-data handling, and parallelization.
 
 -   A final list of reduced features with corresponding p-values for indicating statistical significance.
 
@@ -107,7 +107,7 @@ if (!requireNamespace("reticulate")) {
 library(reticulate)
 reticulate::install_python(version = "3.9.18")
 Sys.setenv(WORKON_HOME = "virtualenvs")
-reticulate::virtualenv_create(envname = "pyRforest-venv", python_version = "3.9.18", packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0"))
+reticulate::virtualenv_create(envname = "pyRforest-venv", python_version = "3.9.18", packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0","scikit-optimize==0.10.2", "memory_profiler==0.61.0"))
 reticulate::use_virtualenv("pyRforest-venv")
 
 # Subsequent usage after initial setup:
@@ -117,14 +117,15 @@ use_virtualenv("pyRforest-venv")
 
 # If using conda (recommended for M-series Arm64 Macs):
 library(reticulate)
-# Install python 3.9.18 if not already installed: https://www.python.org/downloads/macos/ and ensure it is located at /usr/local/bin/python3. 
+# Install python 3.9.18 if not already installed by downloading it from: https://www.python.org/downloads/macos/ 
+# Ensure it is installed to the folder: /usr/local/bin/python3. 
 reticulate::use_python("/usr/local/bin/python3")
-reticulate::conda_install(envname = "pyRforest-conda", python_version = "3.9.18",packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0"))
+reticulate::conda_install(envname = "pyRforest-conda", python_version = "3.9.18",packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0","scikit-optimize==0.10.2", "memory_profiler==0.61.0"))
 reticulate::use_condaenv("pyRforest-conda", required = TRUE)
 
 # Subsequent usage after initial setup:
 library(reticulate)
-use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+use_condaenv("pyRforest-conda", required = TRUE)
 
 # You can check if environment setup has worked by running:
 reticulate::py_config()
@@ -170,10 +171,12 @@ Then press session -> restart R -> then reload your environment
 
 # Data Preparation
 
-Load and prepare your datasets. This R package comes pre-loaded with an RNA-seq dataset which can be loaded using:
+Load and prepare your datasets. This R package comes pre-loaded with 3 demo RNA-seq datasets which can be loaded using:
 
 ```{r, eval=FALSE}
-data("demo_rnaseq_data", package = "pyRforest")
+data("demo_rnaseq_data", package = "pyRforest") # Recommended default dataset with binary targets
+data("demo_rnaseq_data_categorical", package = "pyRforest") # Demo dataset with 2 categorical targets
+data("demo_rnaseq_data_multiclass", package = "pyRforest") # Demo dataset with 3 categorical targets
 ```
 
 <details>
@@ -190,7 +193,7 @@ data("demo_rnaseq_data", package = "pyRforest")
 
 <li><strong>Identifier:</strong> A unique identifier for each row (e.g., "2041-04-12-1"), representing a sample or patient. This is crucial for tracking and referencing data points.</li>
 
-<li><strong>Target:</strong> A binary variable (0 or 1) indicating the outcome to be predicted. It simplifies the outcome variable for machine learning purposes.</li>
+<li><strong>Target:</strong> A variable indicating the outcome/target to be predicted. May be binary, categorical (including more than 2 classes), but must not be continuous. </li>
 
 <li><strong>Gene Expression Data:</strong> The remaining columns, such as ENSG00000253497 and ENSG00000238493, contain gene expression data, here represented as RNA-seq counts. Each column corresponds to a specific gene.</li>
 
@@ -202,7 +205,7 @@ data("demo_rnaseq_data", package = "pyRforest")
 
 <li>Includes the full list of identifiers (identifier) from the training, validation, and testing datasets.</li>
 
-<li>The <em>target_categorical</em> column provides the outcome variable in a categorical format. The <em>target</em> column provides the outcome variable in binary format. This dataframe is primarily used to assist with mapping for SHAP and to assist the user keep track of their data. </li>
+<li>The <em>target_categorical</em> Optional. This column provides the outcome variable in a categorical format. The <em>target</em> column provides the outcome variable in binary format. This dataframe is primarily used to assist with mapping for SHAP and to assist the user keep track of their data. </li>
 
 <li>Essential for mapping and identification purposes across all datasets.</li>
 
@@ -222,7 +225,7 @@ data("demo_rnaseq_data", package = "pyRforest")
 
 <li><strong>Validation Dataset:</strong> Used to tune the parameters of the model and provide an unbiased evaluation of a model fit during the training phase. It helps in providing a check against overfitting.</li>
 
-<li><strong>Testing Dataset:</strong> Used to provide an unbiased evaluation of the final model fit. It's only used after the model training and validation phases are complete.</li>
+<li><strong>Optional Testing Dataset:</strong> Used to provide an unbiased evaluation of the final model fit. It's only used after the model training and validation phases are complete.</li>
 
 </ul>
 
@@ -317,12 +320,27 @@ processed_testing_data <- pyRforest::create_feature_matrix(
 # scikit-learn GridSearchCV documentation for the full description of options, 
 # however our defaults are comprehensive.
 
-# If running default custom_parameter_grid:
-tuning_results <- pyRforest::tune_and_train_rf_model(
+# Default custom_parameter_grid (for binary or 2-class categorcial targets):
+tuning_results <- pyRforest::tune_and_train_rf_model_grid(
                                   X = processed_training_data$X_training_mat, 
                                   y = processed_training_data$y_training_vector,
                                   cv_folds = 5,
                                   scoring = 'roc_auc',
+                                  seed = 4,
+                                  n_jobs = 1,
+                                  n_cores = 7
+                                  )
+
+print(tuning_results$grid_search$best_params_)
+print(tuning_results$grid_search$best_score_)
+
+# Default custom_parameter_grid for multiclass targets 
+# 'roc_auc_ovr' or 'accuracy' should be used over roc_auc:
+tuning_results <- pyRforest::tune_and_train_rf_model_grid(
+                                  X = processed_training_data$X_training_mat, 
+                                  y = processed_training_data$y_training_vector,
+                                  cv_folds = 5,
+                                  scoring = 'roc_auc_ovr',
                                   seed = 4,
                                   n_jobs = 1,
                                   n_cores = 7
@@ -345,20 +363,20 @@ custom_parameter_grid <- list(
   min_samples_split = list(2L, 200L)
 )
 
-# Train a model and perform hyperparameter tuning using pyRforest. 
+# Train a model and perform hyperparameter tuning using GridSearchCV. 
 # This can be extremely time, memory, and processing-power consuming,
 # and scales rapidly with dataset size. 
-# A small dataset such as the demo data may take >5 minutes, 
-# However, a larger 300 x 50,000 dataset may take days depending on the number of 
-# cores used.
+# A small dataset such as the demo data may take <5 minutes on an M1 mac with 16gb ram, 
+# However, a larger dataset may take hours or even days depending on the dataset size
+# and number of cores used.
 # It is strongly recommended to parallelize computing by increasing n_cores.
 # 1 less than the total number of cores on your processor is recommended.
 
-tuning_results <- pyRforest::tune_and_train_rf_model(
+tuning_results <- pyRforest::tune_and_train_rf_model_grid(
                                   X = processed_training_data$X_training_mat, 
                                   y = processed_training_data$y_training_vector,
                                   cv_folds = 5,
-                                  scoring = 'roc_auc', 
+                                  scoring = 'roc_auc', #use 'roc_auc_ovr' for multiclass targets
                                   seed = 123, 
                                   param_grid = custom_parameter_grid,
                                   n_jobs = 1,
@@ -371,9 +389,76 @@ tuning_results <- pyRforest::tune_and_train_rf_model(
 
 print(tuning_results$grid_search$best_params_)
 print(tuning_results$grid_search$best_score_)
-
+best_params<-tuning_results$best_params
 ```
 
+```{r, eval=FALSE, tidy=FALSE}
+# For a faster alternative to the grid search shown above this function uses 
+# scikit-learn's python based BayesSearchCV to perform hyperparameter 
+# tuning and training of a RandomForestClassifier. It allows for customizable parameter 
+# grids and includes preprocessing steps of one-hot encoding and scaling. The function 
+# is designed to find the best hyperparameters based on accuracy. Please reference the 
+# scikit-learn BayesSearchCV documentation for the full description of options, 
+# however our defaults are comprehensive.
+
+# If running default custom_parameter_grid:
+tuning_results <- pyRforest::tune_and_train_rf_model_bayes(
+                                  X = processed_training_data$X_training_mat, 
+                                  y = processed_training_data$y_training_vector,
+                                  cv_folds = 5,
+                                  scoring = 'roc_auc', # use 'roc_auc_ovr' for multiclass targets
+                                  seed = 4,
+                                  n_jobs = 1,
+                                  n_cores = 7
+                                  )
+
+print(tuning_results$grid_search$best_params_)
+print(tuning_results$grid_search$best_score_)
+best_params<-tuning_results$best_params
+
+# If not running defaults and customization of parameter is desired:
+custom_parameter_grid <- list(
+  bootstrap = list(TRUE),
+  class_weight = list(NULL),
+  max_depth = list(5L, 20L, NULL),
+  n_estimators = as.integer(seq(10, 90, 10)),
+  max_features = list("sqrt", 0.2),
+  # It is not recommended to change criterion, as gini is required by pyRforest functions.
+  criterion = list("gini"),
+  warm_start = list(FALSE),
+  min_samples_leaf = list(1L, 50L),
+  min_samples_split = list(2L, 200L)
+)
+
+# Train a model and perform hyperparameter tuning using BayesSearchCV, 
+# While faster and more efficient than the above GridSearchCV, 
+# This can still be moderately time, memory, and processing-power consuming,
+# and scales up with dataset size. 
+# A small dataset such as the demo data may take <1 minutes on an M1 mac with 16gb ram, 
+# However, a larger dataset may take hours depending on the dataset size
+# and number of cores used.
+# It is strongly recommended to parallelize computing by increasing n_cores.
+# 1 less than the total number of cores on your processor is recommended.
+
+tuning_results <- pyRforest::tune_and_train_rf_model_bayes(
+                                  X = processed_training_data$X_training_mat, 
+                                  y = processed_training_data$y_training_vector,
+                                  cv_folds = 5,
+                                  scoring = 'roc_auc', #use 'roc_auc_ovr' for multiclass targets
+                                  seed = 123, 
+                                  param_grid = custom_parameter_grid,
+                                  n_jobs = 1,
+                                  n_cores = 7
+                                  )
+
+# After the model is tuned, print the best parameters and the best score. 
+# See scikit-learn documentation for interpreting scores. 
+# It is recommended to re-tune on different parameters if score is not adequate.
+
+print(tuning_results$bayes_search$best_params_)
+print(tuning_results$bayes_search$best_score_)
+best_params<-tuning_results$best_params
+```
 # Fit and Evaluate the Random Forest model
 
 ## Validation scoring
@@ -424,7 +509,7 @@ new_best_params <- reticulate::dict(best_params_manual)
 ```{r, eval=FALSE, tidy=FALSE, tidy.opts=list(width.cutoff=45)}
 # This function is also used to evaluate the testing set when the model is finalized.
 # Depending on your goals, you may want to initially skip scoring on this set 
-# and re-build your model onthe reduced feature set and re-run previous steps 
+# and re-build your model on the reduced feature set and re-run previous steps 
 # before proceeding.
 # For reporting purposes. You should not run this code until your model is locked down. 
 
@@ -643,17 +728,14 @@ shapvals <- pyRforest::calculate_SHAP_values(
   shap_std_dev_factor = 0.5
   )
 
-# Print the mapping list to remind of binary mapping and aid with SHAP plot 
-# directionality interpretation.
-# If class_index = 1, in the demo this represents the features contribution
-# towards the "Right". Thus in the plot 'red' coloured features could be considered
-# to be positively contributing to "Right" side predictions, and 'blue' coloured 
-# features negatively to "Right" side predictions (or positively to "Left").
+# SHAP analysis is ran for one direction at a time.
+# If a models classes are: ['Left' 'Right'] their order represents the index (starting at 0) that should be passed to class_index
+# If none passed default is 1 for  binary/two class or 0 for multiclass.
+# This index represents the class for which SHAP values will be calculated, 
+# with feature contributions shown relative to that specific class.
+# For multiclass you may want to run your shap analysis x times, one for each class.
 
-unique_mapping <- unique(
-  demo_rnaseq_data$target_categories[, c("target_categorical", "target")]
-  )
-print(unique_mapping)
+# Running the function once with the class_index left at default will help explain. 
  
 # Produce the SHAP Plots
 # Generates a combined bar and beeswarm plot to show direction, 

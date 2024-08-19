@@ -56,6 +56,8 @@ Note: There are ample parameters for controlling the axes scale, label location,
 Note: Plot is based on ggplot2, and after saving the plot object 'p' you can use ggplot2 commands to modify it further, e.g. 'p2 <- p + ggplot2::theme_gray()' to change background colour.
 }
 \examples{
+\dontrun{
 fiplot_full <- generate_fi_rank_plot(feat_importances$permuted_importances, quantile_data, xlimitmin=1, xlimitmax = 10, ylimitmin= -5, ylimitmax = 0, labelhorizontaladjust = -0.05,labelverticaladjust = 1.5,focusedView = FALSE,logOn = TRUE)
 fiplot_focused <- generate_fi_rank_plot(feat_importances$permuted_importances, quantile_data, xlimitmin=1, xlimitmax = 10, ylimitmin= -5, ylimitmax = 0, labelhorizontaladjust = 1.05,labelverticaladjust = 1.5,focusedView = TRUE,logOn = TRUE)
+}
 }

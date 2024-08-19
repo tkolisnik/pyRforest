@@ -26,5 +26,7 @@ With 1,000 permutations, the smallest detectable p-value is 0.001 (1/n_permutati
 a reported p-value of 0 should be interpreted as p < 0.001.
 }
 \examples{
+\dontrun{
 pvalues_ranks <- calculate_ranked_based_pvalues(feat_importances$true_importances, feat_importances$permuted_importances, alpha=0.05)
+}
 }

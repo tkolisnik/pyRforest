@@ -23,8 +23,10 @@ This function fits a Random Forest model and calculates the true and permuted fe
 It performs permutations on the target variable to generate permuted importances for comparison.
 }
 \examples{
+\dontrun{
 feat_importances <- pyRforest::calculate_feature_importances(fitting_results$model,processed_training_data$X_training_mat,processed_training_data$y_training_vector,n_permutations=1000)
 
-Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
+# Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 print(top_features)
+}
 }
