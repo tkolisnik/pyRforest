@@ -35,7 +35,7 @@ Please see vignette for full installation and usage instructions.
 
 ## Data Preparation
 
-pyRforest works with structured genomic data. Your data should be formatted as a list containing four tibbles (training, validation, testing, and target categories). See the [vignette](https://github.com/tkolisnik/pyRforest/blob/main/vignettes/pyRforest-vignette.pdf) for detailed structuring instructions.
+pyRforest is designed to work with structured genomic data with a focus on classification problems. Your data should be formatted as a list containing four tibbles (training, validation, testing, and target categories). See the [vignette](https://github.com/tkolisnik/pyRforest/blob/main/vignettes/pyRforest-vignette.pdf) for detailed structuring instructions.
 
 [Demo data](https://github.com/tkolisnik/pyRforest/blob/main/data/demo_rnaseq_data.RData) is available using the command <code>data("demo_rnaseq_data", package = "pyRforest")</code>
 
