@@ -19,10 +19,8 @@
 #' @importFrom stats quantile
 #' @importFrom stats aggregate
 #' @export
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' quantile_results <- calculate_quantiles(feat_importances$true_importances, feat_importances$permuted_importances, alpha=0.05)
-#' }
 #'
 calculate_quantiles<-function(truevalues,permutedvalues,alpha=0.05){
   if (!is.data.frame(truevalues) || !is.data.frame(permutedvalues)) {
@@ -64,10 +62,8 @@ calculate_quantiles<-function(truevalues,permutedvalues,alpha=0.05){
 #'   as extreme as the one observed, under the null hypothesis. If the p-value is extremely low (below the resolution of the
 #'   number of permutations), it is reported as less than the reciprocal of the number of permutations.
 #' @import dplyr
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' pvalue_set <- calculate_full_set_pvalue(feat_importances$permuted_importances, quantile_data)
-#' }
 #' @export
 calculate_full_set_pvalue <- function(permutedvalues, quantiledata) {
   d <- permutedvalues
@@ -120,10 +116,8 @@ calculate_full_set_pvalue <- function(permutedvalues, quantiledata) {
 #'   Includes ranks up to the first one where the p-value exceeds the alpha threshold. Results sorted by Rank.
 #' @import dplyr
 #' @importFrom stats aggregate
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' pvalues_ranks <- calculate_ranked_based_pvalues(feat_importances$true_importances, feat_importances$permuted_importances, alpha=0.05)
-#' }
 #' @export
 calculate_ranked_based_pvalues <- function(truevalues, permutedvalues, alpha = 0.05) {
   # Error checks

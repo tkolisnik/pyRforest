@@ -1,6 +1,6 @@
 # pyRforest
 
-Welcome to pyRforest a comprehensive tool designed to revolutionize your approach to genomic data analysis using Random Forest Models in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and a matched binary outcome variable using Random Forest models. 
+Welcome to pyRforest, a comprehensive tool for genomic data analysis featuring scikit-learn Random Forests in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and matched binary or categorical outcome variables using Random Forest models. Please read on for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, SHAPley additive explanations, and our custom feature reduction approach by way of rank-based permutation. You will also be directed you through our integration with clusterProfiler and g:Profiler for Gene Ontology and Enrichment Analysis.
 
 Please see our [vignette](https://github.com/tkolisnik/pyRforest/blob/main/vignettes/pyRforest-vignette.pdf) for instructions that will guide you through pyRforest's seamless integration of [scikit-learn's](https://scikit-learn.org/stable/common_pitfalls.html) Random Forest methodologies (imported to R via [reticulate](https://rstudio.github.io/reticulate/)) for model development, evaluation, and our custom feature reduction approach by way of rank-based permutation. You will also be directed through our integration with [Enrichr Enrichment Analysis & Gene Ontology](https://maayanlab.cloud/Enrichr/), [SHAP](https://shap.readthedocs.io/en/latest/) and [gProfiler](https://biit.cs.ut.ee/gprofiler/gost).
 
@@ -27,29 +27,10 @@ devtools::install_github("tkolisnik/pyRforest")
 
 library(pyRforest)
 
-Note: pyRforest is developed on R version 4.3.1 for Apple Mac M1 arm64 architecture.
+Note: pyRforest is developed on R version 4.3.1 for Apple Mac M1 arm64 architecture. It also works on Windows (intel x64) and Linux. 
 
-Python and Conda Setup
+Please see vignette for full installation and usage instructions. 
 
-Before using pyRforest, ensure Python 3.9.18 and Conda are installed and
-set up in a Conda environment with the necessary packages:
-
-# Install and load reticulate
-
-if (!requireNamespace("reticulate", quietly = TRUE))
-    install.packages("reticulate")
-library(reticulate)
-
-# Setup Conda environment
-
-reticulate::use_python("/usr/local/bin/python3")
-reticulate::conda_create(envname = "pyRforest-conda")
-reticulate::conda_install(envname = "pyRforest-conda", packages = c("scikit-learn", "numpy", "shap"))
-reticulate::use_condaenv("pyRforest-conda", required = TRUE)
-
-# Verify Python configuration
-
-reticulate::py_config()
 ```
 
 ## Data Preparation

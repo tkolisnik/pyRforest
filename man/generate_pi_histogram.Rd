@@ -21,7 +21,7 @@ Creates a histogram showing the sum of absolute deviations by count, the measure
 This function generates a histogram illustrating the sum of absolute deviations in the permuted set vs the true (observed) set. It is a visualization of the data used to calculate the p-value for the entire feature set.
 }
 \examples{
-\dontrun{
-pihist_plot<-generate_pi_histogram(feat_importances$permuted_importances, quantile_data)
-}
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+pihist_plot <- generate_pi_histogram(feat_importances$permuted_importances, quantile_data)
+\dontshow{\}) # examplesIf}
 }

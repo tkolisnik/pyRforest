@@ -29,28 +29,33 @@
 #' @param n_cores An optional number of cores to specify for parallel processing. Default is (-2), which is 2 less than the maximum available number of cores.
 #' @return A list containing the best hyperparameters for the model, cross-validation scores on training set,
 #'         and the fitted GridSearchCV object.
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' library(pyRforest)
+#' library(reticulate)
 #'
 #' # Load conda environment, which ensures the correct version of Python and the necessary python packages can be loaded. See vignette for more details.
-#' use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+#' use_condaenv("pyRforest-conda", conda = "conda path see vignette", required = TRUE)
 #'
 #' # Load the demo data
 #' data(demo_rnaseq_data)
 #'
 #' # Prepare the sample data into a format ingestible by the ML algorithm
-#' processed_training_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
+#' processed_training_data <- pyRforest::create_feature_matrix(dataset = demo_rnaseq_data$training_data,
+#'     set_type = "training")
 #'
-#' # Model training (Warning: may take a long time if dataset is large and if param_grid has many options)
-#' tuning_results <- tune_and_train_rf_model(processed_training_data$X_training_mat,
-#'       processed_training_data$y_training_vector,
-#'       cv_folds = 5,
-#'       seed = 123,
-#'       param_grid = list(max_depth = list(10L, 20L)))
+#' # Model tuning and training (Warning: may take a long time if dataset is large and if param_grid has many options)
+#' tuning_results <- pyRforest::tune_and_train_rf_model_grid(
+#'     X = processed_training_data$X_training_mat,
+#'     y = processed_training_data$y_training_vector,
+#'     cv_folds = 5,
+#'    scoring = 'roc_auc', #use 'roc_auc_ovr' for multiclass targets
+#'     seed = 123,
+#'     param_grid = custom_parameter_grid,
+#'     n_jobs = 1,
+#'     n_cores = -2)
+
 #' print(tuning_results$best_params)
 #' print(tuning_results$best_score_)
-#' }
 #' @export
 
 tune_and_train_rf_model_grid <- function(X, y, cv_folds = 5, scoring_method = "roc_auc",  seed = 4, param_grid = NULL, n_jobs=1, n_cores=-2) {
@@ -162,28 +167,31 @@ tune_and_train_rf_model_grid <- function(X, y, cv_folds = 5, scoring_method = "r
 #' @param n_jobs The number of jobs to run in parallel during training. Default is 1.
 #' @param n_cores The number of cores to use for parallel processing. Default is -2, meaning it will use all but 2 cores.
 #' @return A list containing the best hyperparameters for the model, the cross-validation score, the trained `BayesSearchCV` object, and memory usage statistics.
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' library(pyRforest)
+#' library(reticulate)
 #'
 #' # Load the conda environment for the package dependencies
-#' use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+#' use_condaenv("pyRforest-conda", conda = "conda path see vignette", required = TRUE)
 #'
 #' # Load sample data
 #'  data(demo_rnaseq_data)
 #'
-#' # Preprocess the data
-#' processed_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
+#' # Prepare the sample data into a format ingestible by the ML algorithm
+#' processed_training_data <- pyRforest::create_feature_matrix(dataset = demo_rnaseq_data$training_data,
+#'     set_type = "training")
 #'
-#' # Model training
-#' tuning_results <- tune_and_train_rf_model_bayes(processed_data$X_training_mat,
-#'          processed_data$y_training_vector,
-#'          cv_folds = 5,
-#'          seed = 123,
-#'          param_grid = list(max_depth = list(10L, 20L)))
+#' # Model training and tuning
+#' tuning_results <- pyRforest::tune_and_train_rf_model_bayes(
+#'     X = processed_training_data$X_training_mat,
+#'     y = processed_training_data$y_training_vector,
+#'     cv_folds = 5,
+#'     scoring = 'roc_auc', # use 'roc_auc_ovr' for multiclass targets
+#'      seed = 4,
+#'     n_jobs = 1,
+#'     n_cores = -2)
 #' print(tuning_results$best_params)
 #' print(tuning_results$best_score)
-#' }
 #' @export
 
 tune_and_train_rf_model_bayes <- function(X, y, cv_folds = 5, scoring_method = "roc_auc",  seed = 4, param_grid = NULL, n_jobs=1, n_cores=-2)  {
@@ -272,8 +280,7 @@ tune_and_train_rf_model_bayes <- function(X, y, cv_folds = 5, scoring_method = "
 #' @param seed Optional random seed.
 #' @return A list containing the trained model and, if testing or validation data is provided,
 #'         the accuracy, f1, precision, recall and roc_auc scores on the testing or validation set.
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,
 #'       processed_training_data$X_training_mat,
 #'       processed_training_data$y_training_vector,
@@ -282,7 +289,6 @@ tune_and_train_rf_model_bayes <- function(X, y, cv_folds = 5, scoring_method = "
 #'
 #' # Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 #' print(fitting_results)
-#' }
 #' @export
 
 fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_val = NULL, save_path = NULL, seed=4) {
@@ -371,8 +377,6 @@ fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_v
   return(results)
 }
 
-
-
 #' Calculate True and Permuted Feature Importances
 #'
 #' This function fits a Random Forest model and calculates the true and permuted feature importances.
@@ -383,13 +387,11 @@ fit_and_evaluate_rf <- function(best_params, X_train, y_train, X_val = NULL, y_v
 #' @param y_train Training target vector.
 #' @param n_permutations The number of permutations to perform (default: 1000).
 #' @return A list containing three data frames: one for true feature importances, one for permuted importances, and one containing the top features (filtered non-zero true importances).
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' feat_importances <- pyRforest::calculate_feature_importances(fitting_results$model,processed_training_data$X_training_mat,processed_training_data$y_training_vector,n_permutations=1000)
 #'
 #' # Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 #' print(top_features)
-#' }
 #' @import dplyr
 #' @import reticulate
 #' @export

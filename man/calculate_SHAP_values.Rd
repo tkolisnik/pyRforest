@@ -20,6 +20,7 @@ calculate_SHAP_values(
 This index represents the class for which SHAP values will be calculated, with feature contributions shown relative to that specific class.
 For binary classification (e.g., target 1 = "Right", target 0 = "Left"),
 this parameter determines the class perspective for SHAP analysis.
+For 2-class categorical classes are converted to binary based on their index and treated as binary.
 In the demo_rnaseq_data dataset:
 \itemize{
 \item If class_index = 1, SHAP values represent feature contributions towards predicting "Right".
@@ -47,7 +48,7 @@ It then identifies significant features based on the SHAP values for the specifi
 Additionally, it prepares a long-format data frame of individual SHAP values suitable for visualization.
 }
 \examples{
-\dontrun{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 shapvals <- calculate_SHAP_values(fitting_results$model, processed_training_data$X_training_mat, class_index = 1, shap_std_dev_factor = 0.5)
-}
+\dontshow{\}) # examplesIf}
 }

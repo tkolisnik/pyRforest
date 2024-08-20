@@ -57,25 +57,31 @@ It supports binary and categorical multiclass classification and it allows for c
 and scaling. The function is designed to find the best hyperparameters using a brute force search. Please reference the scikit-learn GridSearchCV documentation for the full description of options, however our defaults are comprehensive.
 }
 \examples{
-\dontrun{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(pyRforest)
+library(reticulate)
 
 # Load conda environment, which ensures the correct version of Python and the necessary python packages can be loaded. See vignette for more details.
-use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+use_condaenv("pyRforest-conda", conda = "conda path see vignette", required = TRUE)
 
 # Load the demo data
 data(demo_rnaseq_data)
 
 # Prepare the sample data into a format ingestible by the ML algorithm
-processed_training_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
+processed_training_data <- pyRforest::create_feature_matrix(dataset = demo_rnaseq_data$training_data,
+    set_type = "training")
 
-# Model training (Warning: may take a long time if dataset is large and if param_grid has many options)
-tuning_results <- tune_and_train_rf_model(processed_training_data$X_training_mat,
-      processed_training_data$y_training_vector,
-      cv_folds = 5,
-      seed = 123,
-      param_grid = list(max_depth = list(10L, 20L)))
+# Model tuning and training (Warning: may take a long time if dataset is large and if param_grid has many options)
+tuning_results <- pyRforest::tune_and_train_rf_model_grid(
+    X = processed_training_data$X_training_mat,
+    y = processed_training_data$y_training_vector,
+    cv_folds = 5,
+   scoring = 'roc_auc', #use 'roc_auc_ovr' for multiclass targets
+    seed = 123,
+    param_grid = custom_parameter_grid,
+    n_jobs = 1,
+    n_cores = -2)
 print(tuning_results$best_params)
 print(tuning_results$best_score_)
-}
+\dontshow{\}) # examplesIf}
 }

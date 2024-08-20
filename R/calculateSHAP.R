@@ -10,6 +10,7 @@
 #'   This index represents the class for which SHAP values will be calculated, with feature contributions shown relative to that specific class.
 #'   For binary classification (e.g., target 1 = "Right", target 0 = "Left"),
 #'   this parameter determines the class perspective for SHAP analysis.
+#'   For 2-class categorical classes are converted to binary based on their index and treated as binary.
 #'   In the demo_rnaseq_data dataset:
 #'   - If class_index = 1, SHAP values represent feature contributions towards predicting "Right".
 #'   - If class_index = 0, SHAP values represent feature contributions towards predicting "Left".
@@ -23,10 +24,8 @@
 #'   - shap_values: A data frame with SHAP values for each feature.
 #'   - significant_features: A data frame with significant features based on the cutoff.
 #'   - long_shap_data: A long-format data frame of individual SHAP values for each feature.
-#' @examples
-#' \dontrun{
+#' @examplesIf FALSE
 #' shapvals <- calculate_SHAP_values(fitting_results$model, processed_training_data$X_training_mat, class_index = 1, shap_std_dev_factor = 0.5)
-#' }
 #' @importFrom dplyr filter group_by summarize mutate arrange
 #' @importFrom tidyr pivot_longer
 #' @export

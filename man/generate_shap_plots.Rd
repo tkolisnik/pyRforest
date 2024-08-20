@@ -33,7 +33,7 @@ A combined ggplot object with a bar plot and a beeswarm plot
 Creates a combined bar and beeswarm plot to show global and local feature importance
 }
 \examples{
-\dontrun{
-shapplot<-generate_shap_plots(mean_shap_values = shapvals$significant_features,long_shap_data = shapvals$long_shap_data)
-}
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+shapplot <- generate_shap_plots(mean_shap_values = shapvals$significant_features,long_shap_data = shapvals$long_shap_data)
+\dontshow{\}) # examplesIf}
 }

@@ -29,8 +29,7 @@ assess the significance of feature importances from random forest models by comp
 against a distribution of importances obtained through permutation.
 }
 \examples{
-\dontrun{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 quantile_results <- calculate_quantiles(feat_importances$true_importances, feat_importances$permuted_importances, alpha=0.05)
-}
-
+\dontshow{\}) # examplesIf}
 }

@@ -89,17 +89,115 @@ devtools::install_github("tkolisnik/pyRforest")
 library(pyRforest)
 ```
 
-This package has been developed on Apple mac (M1 arm64). It does not work properly on windows machines due to incompatibilties with the back-end paralellization of model building. It has been tested and works on Linux and [posit Cloud](https://posit.cloud/).
+This package has been developed on Apple Mac (M1 arm64). It has been tested on arm64 Mac, Windows 10 (Intel x64), and Linux (Ubuntu) machines. 
+Parallelization of model building does not work on AMD-based Windows machines due to incompatibilities with the underlying packages. In addition this package has been verified to run on [posit Cloud](https://posit.cloud/).
 
-This package leverages [scikit-learn's](https://scikit-learn.org/stable/) random forest model using the R package reticulate to allow us to execute [Python](https://www.python.org/) code within [R](https://www.r-project.org/about.html). Therefore, in order to use this package you must first install python 3.9.18 and [reticulate](https://rstudio.github.io/reticulate/) and optionally [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), and setup either a reticulate virtualenv (linux) or a conda environment (mac) with python 3.9.18, scikit-learn 3.1.2, numpy 1.26.0, shap 0.43.0 and their dependencies.
+This package leverages [scikit-learn's](https://scikit-learn.org/stable/) random forest model using the R package reticulate to allow us to execute [Python](https://www.python.org/) code within [R](https://www.r-project.org/about.html). Therefore, in order to use this package you must first install python 3.9.18 and [reticulate](https://rstudio.github.io/reticulate/) version 1.34.0 recommended, and optionally [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), and setup either a reticulate virtualenv (linux) or a conda environment (mac or windows) with python 3.9.18, scikit-learn 3.1.2, numpy 1.26.0, shap 0.43.0, scikit-optimize 0.10.2, memory_profiler 0.61.0, and their dependencies.
 
-This package requires the R package reticulate (version 1.34.0 recommended) [reticulate](https://rstudio.github.io/reticulate/) is installed and loaded by running the commands:
+# Mac Installation with Conda
+```{r, eval=FALSE, tidy=TRUE}
+# Verified on M1 chip Arm64 Macs
 
+# Download and install miniconda for Mac from: https://docs.anaconda.com/miniconda/ 
+# Anaconda also works - the two are interchangeable. 
+# Open a terminal window
+
+# Locate your conda install by typing the following into terminal:
+which conda
+
+# Run the following command in terminal to create your conda environment
+conda create -n pyRforest-conda -c conda-forge python=3.9.18 scikit-learn=1.3.2 numpy=1.26.0 
+shap=0.43.0 scikit-optimize=0.10.2 memory_profiler=0.61.0 
+
+# Press 'y' during install to accept installation of dependencies. 
+
+# First ensure reticulate is installed:
+if (!requireNamespace("reticulate")) {
+    install.packages("reticulate")
+}
+
+# Load reticulate 
+library(reticulate)
+
+# Replace the path for the conda variable with the path 
+# found from typing 'which conda' into terminal
+reticulate::use_condaenv("pyRforest-conda", 
+                         conda = '/opt/homebrew/Caskroom/miniconda/base/bin/conda', required = TRUE)
+
+# You can check if environment setup has worked by running:
+reticulate::py_config()
+
+# If environment installation has worked,
+# the previous command will result in an output message similar to:
+
+#python:         /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/bin/python
+#libpython:      /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/libpython3.9.dylib
+#pythonhome:     /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda:/.../pyRforest-conda
+#version:        3.9.18 
+#numpy:          /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/python3.9/sit...
+#numpy_version:  1.26.0
+#sklearn:        /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/python3.9/sit...
+# NOTE: Python version was forced by use_python() function
+
+```
+# Windows Installation with Conda
+
+```{r, eval=FALSE, tidy=TRUE}
+# Verified on Windows 10 x64 Intel architecture - parallelization unlikely to work on AMD architecture 
+
+# Download and install miniconda for Windows from: https://docs.anaconda.com/miniconda/ 
+# Anaconda also works - the two are interchangeable.
+
+# Open an Anaconda Prompt window by typing Anaconda Prompt into the search bar
+
+# Locate your conda install by typing the following into the Anaconda Prompt:
+conda info --base
+
+# Run the following command in Anaconda Prompt to create your conda environment
+conda create -n pyRforest-conda -c conda-forge python=3.9.18 scikit-learn=1.3.2 numpy=1.26.0 
+shap=0.43.0 scikit-optimize=0.10.2 memory_profiler=0.61.0 
+
+# Press 'y' during install to accept installation of dependencies. 
+
+# First ensure reticulate is installed:
+if (!requireNamespace("reticulate")) {
+    install.packages("reticulate")
+}
+
+# Load reticulate 
+library(reticulate)
+
+# Replace the path for the conda variable with the path found 
+# from typing conda info --base into Anaconda Prompt
+reticulate::use_condaenv("pyRforest-conda", 
+                         conda = 'C:/Users/USER/anaconda3/condabin/conda', required = TRUE)
+
+# You can check if environment setup has worked by running:
+reticulate::py_config()
+
+# If environment installation has worked, 
+# the previous command will result in an output message similar to:
+
+#python:         /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/bin/python
+#libpython:      /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/libpython3.9.dylib
+#pythonhome:     /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda:/.../pyRforest-conda
+#version:        3.9.18 
+#numpy:          /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/python3.9/sit...
+#numpy_version:  1.26.0
+#sklearn:        /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/python3.9/sit...
+# NOTE: Python version was forced by use_python() function
+
+
+```
+# Linux Installation
 ```{r, eval=FALSE, tidy=TRUE}
 # First ensure reticulate is installed:
 if (!requireNamespace("reticulate")) {
     install.packages("reticulate")
 }
+
+# Load reticulate 
+library(reticulate)
 
 # If using reticulate's virtualenv (recommended for Linux):
 
@@ -107,7 +205,10 @@ if (!requireNamespace("reticulate")) {
 library(reticulate)
 reticulate::install_python(version = "3.9.18")
 Sys.setenv(WORKON_HOME = "virtualenvs")
-reticulate::virtualenv_create(envname = "pyRforest-venv", python_version = "3.9.18", packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0","scikit-optimize==0.10.2", "memory_profiler==0.61.0"))
+reticulate::virtualenv_create(envname = "pyRforest-venv", python_version = "3.9.18", 
+                              packages = c("scikit-learn==1.3.2", "numpy==1.26.0", 
+                                           "shap==0.43.0","scikit-optimize==0.10.2",
+                                           "memory_profiler==0.61.0"))
 reticulate::use_virtualenv("pyRforest-venv")
 
 # Subsequent usage after initial setup:
@@ -120,7 +221,10 @@ library(reticulate)
 # Install python 3.9.18 if not already installed by downloading it from: https://www.python.org/downloads/macos/ 
 # Ensure it is installed to the folder: /usr/local/bin/python3. 
 reticulate::use_python("/usr/local/bin/python3")
-reticulate::conda_install(envname = "pyRforest-conda", python_version = "3.9.18",packages = c("scikit-learn==1.3.2", "numpy==1.26.0", "shap==0.43.0","scikit-optimize==0.10.2", "memory_profiler==0.61.0"))
+reticulate::conda_install(envname = "pyRforest-conda", python_version = "3.9.18", 
+                          packages = c("scikit-learn==1.3.2", "numpy==1.26.0",
+                                       "shap==0.43.0","scikit-optimize==0.10.2", 
+                                       "memory_profiler==0.61.0"))
 reticulate::use_condaenv("pyRforest-conda", required = TRUE)
 
 # Subsequent usage after initial setup:
@@ -130,7 +234,8 @@ use_condaenv("pyRforest-conda", required = TRUE)
 # You can check if environment setup has worked by running:
 reticulate::py_config()
 
-# If environment installation has worked, the previous command will result in an output message similar to:
+# If environment installation has worked, 
+# the previous command will result in an output message similar to:
 
 #python:         /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/bin/python
 #libpython:      /opt/homebrew/Caskroom/miniconda/base/envs/pyRforest-conda/lib/libpython3.9.dylib
@@ -142,11 +247,10 @@ reticulate::py_config()
 # NOTE: Python version was forced by use_python() function
 
 # You may now proceed to using the package
+
 ```
 
 ## Installation Notes:
-
-You can also build your conda environment outside of Rstudio in the terminal.
 
 For more information on dependency installation see:
 
@@ -181,41 +285,37 @@ data("demo_rnaseq_data_multiclass", package = "pyRforest") # Demo dataset with 3
 
 <details>
 
-<summary><strong>Structuring Your Data for Machine Learning</strong></summary>
+<summary><strong>**Structuring Your Data for Machine Learning**</strong></summary>
 
-<p>To facilitate the use of our machine-learning tools, we recommend structuring your expression and target data similarly to our demo dataset. This section will guide you through this process and provide illustrative examples.</p>
+<p>To make full use of the machine-learning tools provided in this package, we recommend structuring your expression and target data in a specific format. Below, we outline how to organize your data to mirror our demo dataset, ensuring compatibility with the package's functionality.</p>
 
-<p>Your data should be saved as a list containing four tibbles. Each tibble functions similarly to a data frame but offers additional benefits in handling and manipulating large datasets. Below is an overview of the structure and purpose of each tibble:</p>
+<p>Your data should be stored as a list containing four tibbles. Each tibble behaves like a data frame but provides additional flexibility, especially when dealing with large datasets. Here is a breakdown of the structure and purpose of each tibble:</p>
 
-<h4>Training, Validation, and Testing Tibbles</h4>
-
+<h4>**Training, Validation, and Testing Tibbles**</h4>
+These three tibbles represent the splits of your data used for training, validating, and testing your machine learning models. Each tibble must contain the following columns:
 <ul>
 
-<li><strong>Identifier:</strong> A unique identifier for each row (e.g., "2041-04-12-1"), representing a sample or patient. This is crucial for tracking and referencing data points.</li>
+<li><strong>identifier:</strong> A unique identifier for each row (e.g., "2041-04-12-1"), representing a sample or patient. This is column is for tracking and referencing data points.</li>
 
-<li><strong>Target:</strong> A variable indicating the outcome/target to be predicted. May be binary, categorical (including more than 2 classes), but must not be continuous. </li>
+<li><strong>target:</strong> A variable indicating the outcome/target to be predicted. May be binary, categorical (including more than 2 classes), but must not be continuous. </li>
 
-<li><strong>Gene Expression Data:</strong> The remaining columns, such as ENSG00000253497 and ENSG00000238493, contain gene expression data, here represented as RNA-seq counts. Each column corresponds to a specific gene.</li>
+<li><strong>training_data | testing_data | validation_data:</strong> The remaining columns, such as ENSG00000253497 and ENSG00000238493, contain gene expression data, here represented as RNA-seq counts. Each column corresponds to a specific gene.</li>
 
-</ul>
+<h4>**Target Categories Tibble**</h4>
+The target categories tibble provides the categorical classification for each sample in your dataset. This is particularly useful when working with multiclass problems. It contains the following columns:
 
-<h4>Target Categories Tibble</h4>
+<li><strong>identifier:</strong> A unique identifier for each row (e.g., "2041-04-12-1"), representing a sample or patient. This is column is for tracking and referencing data points, matches the tibbles above for linking, but contains the full data.</li>
 
-<ul>
+<li><strong>target_categorical:</strong> Categorical variable representing the class labels, e.g. ("Left", "Right") </li>
 
-<li>Includes the full list of identifiers (identifier) from the training, validation, and testing datasets.</li>
-
-<li>The <em>target_categorical</em> Optional. This column provides the outcome variable in a categorical format. The <em>target</em> column provides the outcome variable in binary format. This dataframe is primarily used to assist with mapping for SHAP and to assist the user keep track of their data. </li>
-
-<li>Essential for mapping and identification purposes across all datasets.</li>
-
+<li><strong>target:</strong> Numeric variable representing the class labels, e.g. ("0", "1") </li>
 </ul>
 
 </details>
 
 <details>
 
-<summary><strong>Best Practices for Data Splitting</strong></summary>
+<summary><strong>**Best Practices for Data Splitting**</strong></summary>
 
 <p>In machine learning, datasets are typically split into three parts:</p>
 
@@ -231,7 +331,7 @@ data("demo_rnaseq_data_multiclass", package = "pyRforest") # Demo dataset with 3
 
 <p>These splits help in effectively training the model and evaluating its performance in a way that is generalizable to new, unseen data.</p>
 
-<p>Standard Recommendations for Dataset Splitting: [It's a common practice](https://encord.com/blog/train-val-test-split/) to use around 60-80% of the data for training, and the remaining 20-40% split between validation and testing. However, these ratios can vary based on the size and specifics of your dataset.</p>
+<p>[It's a common practice](https://encord.com/blog/train-val-test-split/) to use around 60-80% of the data for training, and the remaining 20-40% split between validation and testing. However, these ratios can vary based on the size and specifics of your dataset.</p>
 
 </details>
 
@@ -327,8 +427,9 @@ tuning_results <- pyRforest::tune_and_train_rf_model_grid(
                                   cv_folds = 5,
                                   scoring = 'roc_auc',
                                   seed = 4,
+                                  param_grid = NULL, # If null uses a comprehensive default grid
                                   n_jobs = 1,
-                                  n_cores = 7
+                                  n_cores = -2
                                   )
 
 print(tuning_results$grid_search$best_params_)
@@ -342,8 +443,9 @@ tuning_results <- pyRforest::tune_and_train_rf_model_grid(
                                   cv_folds = 5,
                                   scoring = 'roc_auc_ovr',
                                   seed = 4,
+                                  param_grid = NULL, # If null uses a comprehensive default grid
                                   n_jobs = 1,
-                                  n_cores = 7
+                                  n_cores = -2
                                   )
 
 print(tuning_results$grid_search$best_params_)
@@ -380,7 +482,7 @@ tuning_results <- pyRforest::tune_and_train_rf_model_grid(
                                   seed = 123, 
                                   param_grid = custom_parameter_grid,
                                   n_jobs = 1,
-                                  n_cores = 7
+                                  n_cores = -2
                                   )
 
 # After the model is tuned, print the best parameters and the best score. 
@@ -409,7 +511,7 @@ tuning_results <- pyRforest::tune_and_train_rf_model_bayes(
                                   scoring = 'roc_auc', # use 'roc_auc_ovr' for multiclass targets
                                   seed = 4,
                                   n_jobs = 1,
-                                  n_cores = 7
+                                  n_cores = -2
                                   )
 
 print(tuning_results$grid_search$best_params_)
@@ -448,7 +550,7 @@ tuning_results <- pyRforest::tune_and_train_rf_model_bayes(
                                   seed = 123, 
                                   param_grid = custom_parameter_grid,
                                   n_jobs = 1,
-                                  n_cores = 7
+                                  n_cores = -2
                                   )
 
 # After the model is tuned, print the best parameters and the best score. 
@@ -543,7 +645,7 @@ feat_importances <- pyRforest::calculate_feature_importances(
                                       n_permutations = 1000
                                       )
 
-# Print top features from model pre-Rank-based feature reduction
+# Print top features from model prior to rank-based feature reduction
 print(feat_importances$top_features)
 ```
 
@@ -729,7 +831,8 @@ shapvals <- pyRforest::calculate_SHAP_values(
   )
 
 # SHAP analysis is ran for one direction at a time.
-# If a models classes are: ['Left' 'Right'] their order represents the index (starting at 0) that should be passed to class_index
+# If a models classes are: ['Left' 'Right'] their order represents the index (starting at 0) 
+# which should be passed to class_index
 # If none passed default is 1 for  binary/two class or 0 for multiclass.
 # This index represents the class for which SHAP values will be calculated, 
 # with feature contributions shown relative to that specific class.

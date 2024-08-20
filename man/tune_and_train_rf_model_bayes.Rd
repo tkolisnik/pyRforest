@@ -57,25 +57,30 @@ It supports binary and categorical multiclass classification, and the function i
 Please reference the scikit-learn \code{BayesSearchCV} documentation for more details on customization.
 }
 \examples{
-\dontrun{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(pyRforest)
+library(reticulate)
 
 # Load the conda environment for the package dependencies
-use_condaenv("pyRforest-conda-arm64mac", required = TRUE)
+use_condaenv("pyRforest-conda", conda = "conda path see vignette", required = TRUE)
 
 # Load sample data
  data(demo_rnaseq_data)
 
-# Preprocess the data
-processed_data <- create_feature_matrix(demo_data_rnaseq_rf$training_data, "training")
+# Prepare the sample data into a format ingestible by the ML algorithm
+processed_training_data <- pyRforest::create_feature_matrix(dataset = demo_rnaseq_data$training_data,
+    set_type = "training")
 
-# Model training
-tuning_results <- tune_and_train_rf_model_bayes(processed_data$X_training_mat,
-         processed_data$y_training_vector,
-         cv_folds = 5,
-         seed = 123,
-         param_grid = list(max_depth = list(10L, 20L)))
+# Model training and tuning
+tuning_results <- pyRforest::tune_and_train_rf_model_bayes(
+    X = processed_training_data$X_training_mat,
+    y = processed_training_data$y_training_vector,
+    cv_folds = 5,
+    scoring = 'roc_auc', # use 'roc_auc_ovr' for multiclass targets
+     seed = 4,
+    n_jobs = 1,
+    n_cores = -2)
 print(tuning_results$best_params)
 print(tuning_results$best_score)
-}
+\dontshow{\}) # examplesIf}
 }

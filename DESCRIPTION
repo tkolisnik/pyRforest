@@ -2,11 +2,11 @@ Package: pyRforest
 Title: A comprehensive approach to genomic analysis using
         scikit-learn's Random Forest models and rank-based feature
         reduction in R
-Version: 4.3.0
+Version: 4.3.4
 Authors@R: 
     person("Tyler", "Kolisnik", , "tkolisnik@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2740-4219"))
-Description: Welcome to pyRforest, a comprehensive tool designed to revolutionize your approach to genomic data analysis using Random Forest Models in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and a matched binary outcome variable using Random Forest models. Please see our vignette for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, and our custom feature reduction approach by way of rank-based permutation. It will also direct you through our integration with SHAP and gProfiler. 
+Description: Welcome to pyRforest, a comprehensive tool for genomic data analysis featuring scikit-learn Random Forests in R. Tailored for expression data, such as RNA-seq or Microarray, pyRforest is built for bioinformaticians and researchers looking to explore the relationship between biological features and matched binary or categorical outcome variables using Random Forest models. Please read on for instructions that will guide you through pyRforest's seamless integration of scikit-learn's Random Forest methodologies (imported to R via reticulate) for model development, evaluation, SHAPley additive explanations, and our custom feature reduction approach by way of rank-based permutation. You will also be directed you through our integration with clusterProfiler and g:Profiler for Gene Ontology and Enrichment Analysis.
 License: BSD 3-Clause License + LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -16,7 +16,7 @@ Imports: dplyr, ggplot2, stats, readr, reticulate, gprofiler2,
 Suggests: rmarkdown, knitr
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2024-08-19 07:46:35 UTC; tyler
+Packaged: 2024-08-20 00:06:40 UTC; tyler
 Author: Tyler Kolisnik [aut, cre] (<https://orcid.org/0000-0003-2740-4219>)
 Maintainer: Tyler Kolisnik <tkolisnik@gmail.com>
 Depends: R (>= 3.5.0)

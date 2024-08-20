@@ -18,7 +18,7 @@ A plot of the empirical cumulative density function showing the sum of absolute 
 Creates a plot of the empirical cumulative density function showing the sum of absolute deviations by fraction of data.
 }
 \examples{
-\dontrun{
-ecdf_plot<-generate_pi_ECDF_plot(feat_importances$permuted_importances, quantile_data)
-}
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+ecdf_plot <- generate_pi_ECDF_plot(feat_importances$permuted_importances, quantile_data)
+\dontshow{\}) # examplesIf}
 }

@@ -38,7 +38,7 @@ This function fits a Random Forest model using the provided hyperparameters and
 training data, then evaluates its performance on a validation set.
 }
 \examples{
-\dontrun{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,
       processed_training_data$X_training_mat,
       processed_training_data$y_training_vector,
@@ -47,5 +47,5 @@ fitting_results<-fit_and_evaluate_rf(tuning_results$best_params,
 
 # Print the fitting results, provides accuracy, f1 score, precision, recall and roc_auc scores on the model as fitted to the validation set
 print(fitting_results)
-}
+\dontshow{\}) # examplesIf}
 }

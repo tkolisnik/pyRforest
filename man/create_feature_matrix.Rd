@@ -25,7 +25,7 @@ This function prepares a dataset for scikit-learn random forest machine learning
 Data must be in the correct input format, see vignette or example dataset for details.
 }
 \examples{
-\dontrun{
+\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(pyRforest)
 
 # Load sample data
@@ -36,5 +36,5 @@ processed_training_data <- create_feature_matrix(demo_data_rnaseq_rf$training_da
 processed_validation_data <- create_feature_matrix(demo_data_rnaseq_rf$validation_data, "validation")
 
 processed_testing_data <- create_feature_matrix(demo_data_rnaseq_rf$testing_data, "testing")
-}
+\dontshow{\}) # examplesIf}
 }
